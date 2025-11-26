@@ -1,0 +1,57 @@
+# Git ignore
+*.pyc
+__pycache__/
+*.pyo
+*.pyd
+.Python
+*.so
+*.egg
+*.egg-info/
+dist/
+build/
+*.whl
+
+# Virtual environments
+venv/
+env/
+ENV/
+.venv
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Jupyter Notebooks
+.ipynb_checkpoints/
+
+# Models y datasets (archivos grandes)
+models/*.pth
+models/*.onnx
+models/*.pt
+datasets/**/*.jpg
+datasets/**/*.png
+datasets/**/*.json
+
+# Logs
+logs/
+*.log
+
+# Results
+results/
+work_dirs/
+
+# Temp files
+*.tmp
+*.temp
+.cache/
+
+# MMYOLO (si se clona en el proyecto)
+mmyolo/
+
+# Config con credenciales
+configs/config.yaml
+configs/credentials.yaml
