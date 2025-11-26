@@ -24,29 +24,35 @@ def setup_mmyolo_environment():
     logger.info("CONFIGURACIÓN DE MMYOLO PARA DJI EDGE AI")
     logger.info("=" * 70)
     
-    instructions = """
-    PASOS PARA CONFIGURAR MMYOLO:
+     instructions = """
+     PASOS PARA ADAPTAR MMYOLO PARA DJI EDGE AI:
     
-    1. Clonar el repositorio MMYOLO:
-       git clone https://github.com/open-mmlab/mmyolo.git
-       cd mmyolo
+     1. Clona el repositorio MMYOLO:
+         git clone https://github.com/open-mmlab/mmyolo.git
+         cd mmyolo
     
-    2. Cambiar al tag v0.6.0 (OBLIGATORIO):
-       git checkout tags/v0.6.0 -b dji-edge-ai
+     2. Cambia al tag v0.6.0 (OBLIGATORIO):
+         git checkout tags/v0.6.0 -b dji-edge-ai
     
-    3. Aplicar el parche de compatibilidad DJI:
-       git apply ../0001-NEW-ai-inside-init.patch
+     3. Aplica el parche de compatibilidad DJI:
+         git apply ../0001-NEW-ai-inside-init.patch
+         # El parche adapta el modelo para el chip Edge AI del Matrice 4TD
     
-    4. Instalar dependencias:
-       pip install -U openmim
-       mim install "mmengine>=0.6.0"
-       mim install "mmcv>=2.0.0rc4,<2.1.0"
-       mim install "mmdet>=3.0.0,<4.0.0"
-       pip install -v -e .
+     4. Instala dependencias:
+         pip install -U openmim
+         mim install "mmengine>=0.6.0"
+         mim install "mmcv>=2.0.0rc4,<2.1.0"
+         mim install "mmdet>=3.0.0,<4.0.0"
+         pip install -v -e .
     
-    5. Verificar instalación:
-       python -c "import mmyolo; print(mmyolo.__version__)"
-    """
+     5. Verifica instalación:
+         python -c "import mmyolo; print(mmyolo.__version__)"
+    
+     6. IMPORTANTE: Usa siempre el archivo de configuración
+         yolov8_s_syncbn_fast_8xb16-500e_coco.py como base.
+         Limita el número de clases a 10 (por hardware DJI).
+         Usa imágenes aéreas y térmicas (640x512) para el dataset.
+     """
     
     print(instructions)
     logger.info("Entorno configurado. Proceda con la preparación del dataset.")
@@ -268,36 +274,42 @@ def print_training_instructions():
     bash ./tools/dist_train.sh configs/yolov8/yolov8_dji_custom.py 4
     
     O usando torchrun:
-    CUDA_VISIBLE_DEVICES=0,1,2,3 python -m torch.distributed.launch \\
-        --nproc_per_node=4 \\
-        --master_port=29500 \\
-        tools/train.py configs/yolov8/yolov8_dji_custom.py \\
+    CUDA_VISIBLE_DEVICES=0,1,2,3 python -m torch.distributed.launch \
+        --nproc_per_node=4 \
+        --master_port=29500 \
+        tools/train.py configs/yolov8/yolov8_dji_custom.py \
         --launcher pytorch
     
     VALIDACIÓN:
     -----------
-    python tools/test.py configs/yolov8/yolov8_dji_custom.py \\
-        work_dirs/yolov8_dji_custom/epoch_500.pth \\
+    python tools/test.py configs/yolov8/yolov8_dji_custom.py \
+        work_dirs/yolov8_dji_custom/epoch_500.pth \
         --show-dir results/
     
     EXPORTAR A ONNX (para testing local):
     --------------------------------------
-    python tools/deployment/pytorch2onnx.py \\
-        configs/yolov8/yolov8_dji_custom.py \\
-        work_dirs/yolov8_dji_custom/best_coco_bbox_mAP_epoch_X.pth \\
-        --output-file yolov8_dji.onnx \\
-        --input-img demo/demo.jpg \\
+    python tools/deployment/pytorch2onnx.py \
+        configs/yolov8/yolov8_dji_custom.py \
+        work_dirs/yolov8_dji_custom/best_coco_bbox_mAP_epoch_X.pth \
+        --output-file yolov8_dji.onnx \
+        --input-img demo/demo.jpg \
         --shape 640 640
     
-    IMPORTANTE - CUANTIFICACIÓN DJI:
-    ---------------------------------
-    1. Una vez entrenado, subir el archivo .pth al panel de DJI Developer
-    2. Subir 500-1000 imágenes de calibración (JPG/PNG)
-    3. DJI procesará la cuantificación (puede tardar varias horas)
-    4. Descargar el modelo cuantificado optimizado para M4TD
-    5. Instalar en DJI Pilot 2 usando side-load
+    FLUJO DE CUANTIFICACIÓN Y DESPLIEGUE DJI:
+    -----------------------------------------
+    1. Una vez entrenado, sube el archivo .pth al panel de DJI Developer (Model Management).
+    2. Sube 500-1000 imágenes de calibración (JPG/PNG, aéreas y térmicas si aplica).
+    3. DJI procesará la cuantificación (puede tardar varias horas).
+    4. Descarga el modelo cuantificado optimizado para Matrice 4TD.
+    5. Instala el modelo en DJI Pilot 2 usando side-load.
+    6. El modelo final ejecutará en el chip Edge AI (10 TOPS) del dron.
     
-    El modelo final ejecutará en los 10 TOPS del chip del Matrice 4TD.
+    ADVERTENCIAS:
+    - Máximo 10 clases (por hardware DJI)
+    - Input size fijo: 640x640
+    - Solo usar yolov8_s_syncbn_fast_8xb16-500e_coco.py como base
+    - Dataset debe ser capturado desde drones (perspectiva aérea)
+    - Imágenes térmicas deben ser 640x512 px
     """
     
     print(instructions)
